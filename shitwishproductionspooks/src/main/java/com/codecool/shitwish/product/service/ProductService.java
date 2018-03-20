@@ -35,6 +35,18 @@ public class ProductService {
         return convertProductListToJsonStringList(productRepository.findByProductStatus(productStatus));
     }
 
+    public JSONObject getProductByProductId(int id) {
+        if (productRepository.findById(id) != null) {
+            return new JSONObject(productRepository.findById(id));
+        } else {
+            throw new NullPointerException("id not found");
+        }
+    }
+
+    public JSONObject getProductByUserId(int id) throws JsonProcessingException {
+        return convertProductListToJsonStringList(productRepository.findByUserId(id));
+    }
+
 
     public void addProduct(String name, ProductStatus productStatus, String image, String description, long price, Date date, int userId) {
         Product product = new Product(name, productStatus, image, description, price, date, userId);
@@ -46,9 +58,22 @@ public class ProductService {
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("products", productList);
+
         return jsonObject;
     }
 
+    //is it necessary? the if-else
+    public void editProductByProductId(int id) {
+        Product productToEdit = productRepository.findById(id);
+        if (productToEdit.getProductStatus() == ProductStatus.ACTIVE) {
+            productToEdit.setProductStatus(ProductStatus.IN_CART);
+        } else {
+            productToEdit.setProductStatus(ProductStatus.SOLD);
+        }
+        productRepository.save(productToEdit);
+    }
+
+    //it has to be deleted
     public JSONObject sampleProductFields() {
         JSONObject jsonObject =new JSONObject();
         jsonObject.put("image", "valami.jpg");
