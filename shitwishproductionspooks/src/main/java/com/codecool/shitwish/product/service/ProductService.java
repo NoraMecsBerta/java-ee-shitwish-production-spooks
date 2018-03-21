@@ -5,15 +5,9 @@ import com.codecool.shitwish.product.model.Product;
 import com.codecool.shitwish.product.model.ProductStatus;
 import com.codecool.shitwish.product.repository.ProductRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.gson.Gson;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -26,12 +20,8 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    /*public List<String> findAllActive() {
-        return convertProductListToJsonStringList(productRepository.findByProductStatus(ProductStatus.ACTIVE));
 
-    }*/
-
-    public JSONObject findProductsByStatus(ProductStatus productStatus) throws JsonProcessingException {
+    public JSONObject findProductsByStatus(ProductStatus productStatus) throws JsonProcessingException, NullPointerException {
         return convertProductListToJsonStringList(productRepository.findByProductStatus(productStatus));
     }
 
@@ -43,8 +33,12 @@ public class ProductService {
         }
     }
 
-    public JSONObject getProductByUserId(int id) throws JsonProcessingException {
-        return convertProductListToJsonStringList(productRepository.findByUserId(id));
+    public JSONObject getProductByUserId(int id) throws JsonProcessingException, NullPointerException {
+        if (productRepository.findByUserId(id) != null) {
+            return convertProductListToJsonStringList(productRepository.findByUserId(id));
+        } else {
+            throw new NullPointerException("user id not found");
+        }
     }
 
 
@@ -62,15 +56,24 @@ public class ProductService {
         return jsonObject;
     }
 
-    //is it necessary? the if-else
-    public void editProductByProductId(int id) {
+    public void editProductByProductId(int id, String status) {
         Product productToEdit = productRepository.findById(id);
-        if (productToEdit.getProductStatus() == ProductStatus.ACTIVE) {
+        if (status.equals("c")) {
             productToEdit.setProductStatus(ProductStatus.IN_CART);
-        } else {
+        } else if (status.equals("a")) {
+            productToEdit.setProductStatus(ProductStatus.ACTIVE);
+        } else if (status.equals("s")) {
             productToEdit.setProductStatus(ProductStatus.SOLD);
         }
         productRepository.save(productToEdit);
+    }
+
+    public void setProductStatusToSold(List<Integer> productList) {
+        for (int id : productList) {
+            Product productToEdit = productRepository.findById(id);
+            productToEdit.setProductStatus(ProductStatus.SOLD);
+            productRepository.save(productToEdit);
+        }
     }
 
     //it has to be deleted
