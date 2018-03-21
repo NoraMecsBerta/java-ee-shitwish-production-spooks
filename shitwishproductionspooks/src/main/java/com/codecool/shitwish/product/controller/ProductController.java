@@ -9,14 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
-import javax.validation.constraints.Null;
+import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 import java.util.List;
+
 
 @Controller
 public class ProductController {
@@ -28,10 +24,13 @@ public class ProductController {
     @GetMapping(value = "/product/active-products")
     public ResponseEntity getActiveProducts() throws JsonProcessingException {
         System.out.println(productService.findProductsByStatus(ProductStatus.ACTIVE));
-        return new ResponseEntity<>(productService.findProductsByStatus(ProductStatus.ACTIVE).toString(), HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(productService.findProductsByStatus(ProductStatus.ACTIVE).toString(), HttpStatus.OK);
+        } catch (JsonProcessingException e) {
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
     }
 
-    //exception handling is okay?
     @GetMapping(value = "/product/by-id/{id}")
     public ResponseEntity getProductById(@PathVariable int id) {
         try {
@@ -43,7 +42,6 @@ public class ProductController {
         }
     }
 
-    //exception handling started to implement only here
     @GetMapping(value = "/product/by-user/{userId}")
     public ResponseEntity getProductsByUser(@PathVariable int userId) throws JsonProcessingException {
         try {
@@ -54,50 +52,48 @@ public class ProductController {
         }
     }
 
-
-    /*@GetMapping(value = "/sampleproduct")
-    public HttpStatus getOneProduct() {
-        JSONObject jsonObject = productService.sampleProductFields();
-        String name = (String)jsonObject.get("name");
-        ProductStatus productStatus = (ProductStatus) jsonObject.get("productStatus");
-        String description = (String) jsonObject.get("description");
-        String image = (String) jsonObject.get("image");
-        int userId = (Integer) jsonObject.get("userId");
-        Date date = (Date) jsonObject.get("date");
-        int price =(Integer) jsonObject.get("price");
-        productService.addProduct(name, productStatus, image, description, price, date, userId);
-        return HttpStatus.OK;
-    }*/
-
-    @GetMapping(value = "/product/add-product")
-    public ResponseEntity sampleAddProduct() {
+    //exception handling is missing
+    @PostMapping(value = "/product/add-product")
+    public ResponseEntity sampleAddProduct(@RequestParam JSONObject jsonObject) {
         //todo
         //we have to read out the json object from a route in main and after
         //save the entity like above
         //this should be post mapping
-        JSONObject jsonObject = productService.sampleProductFields();
-        String name = (String)jsonObject.get("name");
+        //jsonobject from url
+        //JSONObject jsonObject = productService.sampleProductFields();
+        String name = (String) jsonObject.get("name");
         ProductStatus productStatus = (ProductStatus) jsonObject.get("productStatus");
         String description = (String) jsonObject.get("description");
         String image = (String) jsonObject.get("image");
         int userId = (Integer) jsonObject.get("userId");
         Date date = (Date) jsonObject.get("date");
-        int price =(Integer) jsonObject.get("price");
+        int price = (Integer) jsonObject.get("price");
         productService.addProduct(name, productStatus, image, description, price, date, userId);
         return new ResponseEntity(HttpStatus.OK);
     }
 
-
-    @GetMapping(value = "/product/edit-product-status/{productId}")
-    public ResponseEntity editProductStatusById(@PathVariable int productId) {
+    //look up and todo exception handling
+    @PostMapping(value = "/product/edit-product-status/{productId}")
+    public ResponseEntity editProductStatusById(@PathVariable int productId, @RequestParam JSONObject jsonObject) {
         //the 2 lines are temporary they have to be deleted, is it necessary at all?
         //statuses can go on line by line
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("productStatus", ProductStatus.IN_CART);
-        productService.editProductByProductId(productId);
+        //JSONObject jsonObject = new JSONObject();
+        //jsonObject.put("productStatus", ProductStatus.IN_CART);
+        String status = (String) jsonObject.get("status");
+        productService.editProductByProductId(productId, status);
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    // todo exception handling
+    @PostMapping(value = "/product/remove-products")
+    public ResponseEntity productStatusSetToSold(@RequestParam JSONObject jsonObject) {
+        List<Integer> productIdList = (List<Integer>) jsonObject.get("products");
+        productService.setProductStatusToSold(productIdList);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
+
+    //are they necessary???
     @GetMapping(value = "/ordered-products")
     public ResponseEntity getOrderedProducts() throws JsonProcessingException {
         System.out.println(productService.findProductsByStatus(ProductStatus.IN_CART));
